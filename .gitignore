@@ -13,9 +13,20 @@ $RECYCLE.BIN/
 *.msi
 *.msm
 *.msp
+*.exe
 
 # Windows shortcuts
 *.lnk
+*.zip
+*.CHM
+
+
+# project temp file
+nppBackup/
+build/
+dist/
+spylite24/
+*.pyc
 
 # =========================
 # Operating System Files
