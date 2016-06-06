@@ -6,15 +6,24 @@ Licensed under the Apache License 2.0
 # 预设好参数，方便无参数直接运用 setup.py 即可.
 # 建议使用 Python-2.6 32位 + py2exe
 '''
-import sys
-print sys.version
+
+
 import os
 import shutil
-
+from datetime import datetime
 from distutils.core import setup
+
 import py2exe, sys
 path_join = os.path.join
 currDir = os.path.dirname(__file__)
+
+
+fp = open(path_join(currDir, 'version.py'), 'w+')
+fp.write('''
+VERSION = 'Version-0.0.1; build at %s'
+''' % datetime.now())
+fp.close()
+
 
 # 预设好参数，方便无参数直接运用 setup.py 即可
 sys.argv.append('py2exe')

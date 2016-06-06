@@ -11,8 +11,8 @@ from optparse import OptionParser
 
 import LedPlayer
 import spycmd as CMD
-
-__version__ = 'ver-0.0.1 ; build at 2016-06-06 18:00'
+import version
+__version__ = version.VERSION 
 UDP_PORT = 9999; 
 CHECK_TIMEOUT = 15 
 
@@ -23,7 +23,7 @@ def dispath_cmd(ledPlayWindows, cmd):
     else:
         func = getattr(ledPlayWindows, "click_" + cmd)
         func()
-    print "cmd-->", cmd ," success. :"
+    print "cmd-->", cmd ," success."
 
 class MyUDPHandler(SocketServer.BaseRequestHandler):
     """
@@ -37,7 +37,7 @@ class MyUDPHandler(SocketServer.BaseRequestHandler):
         data = self.request[0].strip()
         socket = self.request[1]
         print "recv from {%s} data{%s}:" %(self.client_address[0], data)
-        cmd_list = data.split(CMD.CMD_SPLIT)
+        cmd_list = [c for c in data.split(CMD.CMD_SPLIT) if c]
         
         for cmd in cmd_list:
             cmd = cmd.strip()
@@ -47,19 +47,20 @@ class MyUDPHandler(SocketServer.BaseRequestHandler):
                 socket.sendto("CMD[%s] not support.\n" % cmd,
                     self.client_address)
                 continue
-            mainWindow = LedPlayer.iter_windows()
-            if not mainWindow:
-                socket.sendto("LedPlayer not running.\n",
-                    self.client_address)
-                break
             try:
+                mainWindow = LedPlayer.iter_windows()
+                if not mainWindow:
+                    socket.sendto("LedPlayer not running.\n",
+                    self.client_address)
+                    break
+            
                 dispath_cmd(mainWindow, cmd)
             except Exception,e:
                 socket.sendto(str(e), self.client_address)
                 continue
             socket.sendto('ok', self.client_address)
 
-        print 'end handle....'
+        print 'end handle ... of packet:', cmd_list
         
 def main():
     parser = OptionParser()  
@@ -75,7 +76,7 @@ def main():
         if not  mainWindow:
             print "LedPlayer not running.\n"
     
-        print "Version{%s} Process listen at UDP[%s:%s]" % (__version__, host, port)
+        print "\tVersion: %s \n\tProcess listen at UDP[%s:%s]" % (__version__, host, port)
         server = SocketServer.UDPServer((host, port), MyUDPHandler)
         server.serve_forever()   
     except socket.error, e:

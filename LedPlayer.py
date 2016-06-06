@@ -17,6 +17,7 @@ import winmgr
 
 
 EXE_NAME = "LedPlayer_"
+click_sleep = 0.1
 
 class RECT(ctypes.Structure):
     _fields_ = [('left', ctypes.c_int),  
@@ -24,8 +25,6 @@ class RECT(ctypes.Structure):
                 ('right', ctypes.c_int),  
                 ('bottom', ctypes.c_int)]
    
-    def set(self, left, top, right, bottom):
-        self.left, self.top, self.right, self.bottom = left, top, right, bottom
 
 class LedPlayer(object):
     """docstring for LedPlayer"""
@@ -44,18 +43,18 @@ class LedPlayer(object):
 
     def isplaying(self):
         winmgr.set_foreground(self.hwnd)
-        self.tabPageCtrl = win32gui.FindWindowEx(self.hwnd, None, "TPageControl", None)
-
-        if self.tabPageCtrl :
-            self.playing = False # 非播放模式
-        else:
-            self.playing = True
-
         self.playBar = win32gui.FindWindow("TJingJian_Player_form", "JingJian_Player_form")
+        
+        self.playing = bool(win32gui.IsWindowVisible(self.playBar))
+        
+        if self.playBar and self.playing and self.hwnd != self.playBar:
+            print "set hwnd = playBar"
+            self.hwnd = self.playBar
+            winmgr.set_foreground(self.hwnd)
+            
         return self.playing
         print "parent      ->%#X" % self.hwnd
-        print "playBar     ->%#X" % self.playBar
-        print "tabPageCtrl ->%#x" % self.tabPageCtrl
+        print "playBar     ->%#X" % self.playBar, " IsWindowVisible->",
         print "playing was:  ",self.playing
         return self.playing
 
@@ -116,14 +115,16 @@ class LedPlayer(object):
             raise Exception("mode index must be 1~16.")
         offset_x, offset_y =  60, 130
         if self.isplaying():
-            offset_x, offset_y = 170, 15
+            print "playing .... on click mode->", index
+            offset_x, offset_y = 170, 16 # 播放状态下，“模式1”位置
             W = 55
             if index > 8:
                 offset_y = 45
-                index - 8
-            offset_x =(index-1) * W
+                index -= 8
+            offset_x +=(index-1) * W
 
         else:
+            print "not playing"
             offset_x, offset_y =  60, 130
             H, W = 30, 70
             if index % 2 == 0: # 偶数
@@ -132,9 +133,18 @@ class LedPlayer(object):
         
         return (self.rect.left + offset_x, 
                 self.rect.top + offset_y)
+
     def click_mode(self, index=14):
         x,y = self.get_mode_button_pos(index)
         self.click(x, y , "mode-%d" % index)
+    
+    def _left_click(self, x, y, name):
+        print "click-> [%s]  pos(%d,%d)" % (name, x, y)
+        win32api.SetCursorPos([x, y])
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,0,0,0,0) 
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,0,0,0,0)
+        time.sleep(click_sleep)
+        
 
     def click_jiemu(self):
         if self.isplaying():
@@ -143,18 +153,12 @@ class LedPlayer(object):
 
         # 点击 "节目" tab
         x, y = self.rect.left + 70, self.rect.top + 90
-        win32api.SetCursorPos([x, y])
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,0,0,0,0) 
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,0,0,0,0)
-        print "click-> [%s]  pos(%d,%d)" % ("JieMu", x, y)
+        self._left_click(x, y, "tab")
+        
 
     def click(self, x, y, name=""):
         self.click_jiemu()
-        win32api.SetCursorPos([x, y])
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,0,0,0,0) 
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,0,0,0,0)
-
-        print "click-> [%s]  pos(%d,%d)" % (name, x, y)
+        self._left_click(x, y, name)
 
     def click_play(self):
         x, y = self.get_play_button_pos()
@@ -176,7 +180,8 @@ class LedPlayer(object):
         self.click(x, y, "pause")
 
     def click_preview(self):
-        if self.isplaying():self.click_stop()
+        if self.isplaying():
+            self.click_stop()
 
         x, y = self.get_preview_button_pos()
         self.click(x, y, "preview")
@@ -221,7 +226,7 @@ def iter_windows():
             continue
         else:
             break
-    
+
     rect = RECT()
 
     for hwnd in hwnds:
@@ -241,20 +246,21 @@ def iter_windows():
 def main():
     win =  iter_windows()
     assert(win)
+    global click_sleep
+    click_sleep=2
     
-    win.click_play_as_screenshots()
-    # return
-    clicks = [i for i in dir(win)
-        if i.startswith('click_')]
-        
-       
-        
-    for c in clicks:
-        print c
-        
+    iter_windows().click_preview()
+    time.sleep(click_sleep)
+    iter_windows().click_play_as_video()
     return
-        # getattr(iter_windows(), c)()
-        # time.sleep(1)
+    for i in range(1, 5):
+        iter_windows().click_mode(i)
+        iter_windows().click_play()
+        time.sleep(1)
+        if i &0x1: iter_windows().click_stop()
+
+
+    return
 
     for c in clicks:
         getattr(iter_windows(), c)()

@@ -13,6 +13,8 @@ import win32process
 import traceback
 
 def set_foreground(hwnd):
+    if hwnd == win32gui.GetForegroundWindow():
+        return
     shell = win32com.client.Dispatch("WScript.Shell")
     shell.SendKeys('%')
     win32gui.SetForegroundWindow(hwnd)
