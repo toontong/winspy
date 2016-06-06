@@ -7,10 +7,14 @@ import time
 import win32gui
 import win32api
 import win32con
+import win32com
+import win32com.client
 import win32process
 import traceback
 
 def set_foreground(hwnd):
+    shell = win32com.client.Dispatch("WScript.Shell")
+    shell.SendKeys('%')
     win32gui.SetForegroundWindow(hwnd)
 
 def find_process_pids(porcess_name):
