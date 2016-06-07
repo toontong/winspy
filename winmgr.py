@@ -14,6 +14,7 @@ import traceback
 
 def set_foreground(hwnd):
     if hwnd == win32gui.GetForegroundWindow():
+        #print "Do not need set_foreground."
         return
     shell = win32com.client.Dispatch("WScript.Shell")
     shell.SendKeys('%')

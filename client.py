@@ -32,14 +32,16 @@ def main():
             cmd += CMD.ALL_CMD[r] + ';'
             n-=1
         
-        # cmd ="play;stop;play_as_screenshots;mode_13;"
+        cmd ="play;"
+        cmd ="mode_5;"
+        
         sock.sendto(cmd, (host, port))
-        # return
+        
         print "Send to [%s:%s] CMD=[%s]" % (host, port, cmd)
         received = sock.recv(1024)
         print "Received: {}".format(received)
         time.sleep(2)
-        # return
+        return
 
 if __name__ == '__main__':
     main()

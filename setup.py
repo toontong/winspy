@@ -20,7 +20,7 @@ currDir = os.path.dirname(__file__)
 
 fp = open(path_join(currDir, 'version.py'), 'w+')
 fp.write('''
-VERSION = 'Version-0.0.1; build at %s'
+VERSION = '0.0.1; build at %s'
 ''' % datetime.now())
 fp.close()
 
